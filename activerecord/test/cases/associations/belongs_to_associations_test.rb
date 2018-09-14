@@ -741,6 +741,32 @@ class BelongsToAssociationsTest < ActiveRecord::TestCase
     assert_equal companies(:first_firm), client.firm_with_basic_id
   end
 
+  def test_changing_foreign_key_changes_the_associated_object
+    author1, author2 = Author.limit(2)
+    post = Post.create!(title: "foo", body: "bar", author_id: author1.id)
+    assert_equal post.author, author1
+
+    post.author_id = author2.id
+    assert_equal post.author, author2
+
+    post.save!
+    assert_equal post.reload.author, author2
+  end
+
+  def test_changing_foreign_key_changes_the_associated_object_when_inversed
+    author1, author2 = Author.limit(2)
+    Post.create!(title: "foo", body: "bar", author: author1)
+
+    post = author1.posts.first
+    assert_equal post.author, author1
+
+    post.author_id = author2.id
+    assert_equal post.author, author2
+
+    post.save!
+    assert_equal post.reload.author, author2
+  end
+
   def test_polymorphic_setting_foreign_key_after_nil_target_loaded
     sponsor = Sponsor.new
     sponsor.sponsorable
