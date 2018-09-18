@@ -135,6 +135,10 @@ module ActiveRecord
           scope.where! construct_join_attributes(*records)
           scope = scope.where(through_scope_attributes)
 
+          if method != :destroy && through_reflection.inverse_of && through_reflection.inverse_of.options[:touch]
+            scope.each(&:_run_touch_callbacks)
+          end
+
           case method
           when :destroy
             if scope.klass.primary_key

@@ -75,9 +75,11 @@ module ActiveRecord
         end
 
         def update_counter(difference, reflection = reflection())
-          if reflection.has_cached_counter?
-            owner.increment!(reflection.counter_cache_column, difference)
-          end
+          return unless reflection.has_cached_counter?
+
+          # touch = reflection.inverse_of && reflection.inverse_of.options[:touch]
+          # owner.increment!(reflection.counter_cache_column, difference, touch: touch)
+          owner.increment!(reflection.counter_cache_column, difference)
         end
 
         def update_counter_in_memory(difference, reflection = reflection())
@@ -108,6 +110,11 @@ module ActiveRecord
             update_counter(-records.length) unless reflection.inverse_updates_counter_cache?
           else
             scope = self.scope.where(reflection.klass.primary_key => records)
+
+            if reflection.inverse_of && reflection.inverse_of.options[:touch]
+              scope.each(&:_run_touch_callbacks)
+            end
+
             update_counter(-delete_count(method, scope))
           end
         end
